@@ -1,0 +1,102 @@
+{% extends "header.html" %}
+
+{% block title %}Demographics Analysis{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h3 class="text-center fw-bold mb-4">Demographics Analysis</h3>
+  <p class="text-center text-muted mb-5">
+    Visual overview of visitors by gender, age, and district
+  </p>
+
+  <div class="row g-4">
+    <!-- Gender Pie Chart -->
+    <div class="col-lg-6 col-md-12">
+      <div class="card border-primary shadow-sm h-100">
+        <div class="card-body d-flex flex-column align-items-center">
+          <h5 class="card-title fw-bold mb-3">Gender Distribution</h5>
+          <canvas id="genderChart" style="max-height:300px; width:100%;"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Age Bar Chart -->
+    <div class="col-lg-6 col-md-12">
+      <div class="card border-success shadow-sm h-100">
+        <div class="card-body d-flex flex-column align-items-center">
+          <h5 class="card-title fw-bold mb-3">Age Distribution</h5>
+          <canvas id="ageChart" style="max-height:300px; width:100%;"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- District Bar Chart -->
+    <div class="col-12">
+      <div class="card border-warning shadow-sm h-100">
+        <div class="card-body d-flex flex-column align-items-center">
+          <h5 class="card-title fw-bold mb-3">District Distribution</h5>
+          <canvas id="districtChart" style="max-height:350px; width:100%;"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="text-center mt-5">
+    <a href="{{ url_for('analysis.analysis') }}" class="btn btn-outline-primary btn-lg">Back</a>
+  </div>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const commonOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom', labels: { boxWidth: 20, padding: 15 } } }
+  };
+
+  // Gender Pie Chart
+  new Chart(document.getElementById('genderChart').getContext('2d'), {
+    type: 'pie',
+    data: {
+      labels: {{ gender_data.keys()|list|tojson }},
+      datasets: [{
+        data: {{ gender_data.values()|list|tojson }},
+        backgroundColor: ['#36A2EB', '#FF6384', '#FFCE56'],
+        hoverOffset: 10
+      }]
+    },
+    options: commonOptions
+  });
+
+  // Age Bar Chart
+  new Chart(document.getElementById('ageChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: {{ age_data.keys()|list|tojson }},
+      datasets: [{
+        label: 'Number of Visitors',
+        data: {{ age_data.values()|list|tojson }},
+        backgroundColor: '#4BC0C0',
+        borderRadius: 6
+      }]
+    },
+    options: { ...commonOptions, plugins: { legend: { display: false } } }
+  });
+
+  // District Bar Chart
+  new Chart(document.getElementById('districtChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: {{ district_data.keys()|list|tojson }},
+      datasets: [{
+        label: 'Number of Visitors',
+        data: {{ district_data.values()|list|tojson }},
+        backgroundColor: '#FF9F40',
+        borderRadius: 6
+      }]
+    },
+    options: { ...commonOptions, plugins: { legend: { display: false } } }
+  });
+</script>
+{% endblock %}

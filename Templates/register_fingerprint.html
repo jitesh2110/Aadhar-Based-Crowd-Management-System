@@ -1,0 +1,33 @@
+{% extends "header.html" %}
+
+{% block title %}Register Fingerprint - Crowd Management System{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title fw-semibold mb-4">
+            🖐️ Register Fingerprint for {{ user.name }}
+          </h5>
+          <p class="text-muted mb-3">
+            Aadhaar Number: {{ user.aadhar_number }}<br>
+            Please upload a clear fingerprint image
+          </p>
+
+          <form method="POST" action="{{ url_for('fingerprint.register_fingerprint', aadhar_number=user.aadhar_number) }}" enctype="multipart/form-data">
+            <div class="mb-3">
+              <label for="fingerprint_image" class="form-label">Upload Fingerprint Image</label>
+              <input class="form-control" type="file" id="fingerprint_image" name="fingerprint_image" accept="image/*" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Register Fingerprint</button>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

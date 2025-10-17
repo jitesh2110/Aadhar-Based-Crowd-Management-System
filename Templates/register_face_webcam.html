@@ -1,0 +1,46 @@
+{% extends "header.html" %}
+
+{% block title %}Register Face - {{ user.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="card mx-auto p-4 shadow-sm" style="max-width: 600px;">
+    <h4 class="mb-3">Register Face for {{ user.name }}</h4>
+
+    <video id="video" width="400" height="300" autoplay class="border mb-3"></video>
+    <canvas id="canvas" width="400" height="300" style="display:none;"></canvas>
+
+    <form method="POST" action="{{ url_for('face.register_face_webcam', aadhar_number=user.aadhar_number) }}">
+        <input type="hidden" name="face_image" id="face_image">
+        <button type="button" id="capture" class="btn btn-primary mb-2">Capture & Register</button>
+    </form>
+
+    <a href="{{ url_for('profile.profile', aadhar_number=user.aadhar_number) }}" class="btn btn-secondary mt-2">Back to Profile</a>
+  </div>
+</div>
+
+<script>
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const faceInput = document.getElementById('face_image');
+const captureBtn = document.getElementById('capture');
+
+// Access webcam
+navigator.mediaDevices.getUserMedia({ video: true })
+.then(stream => { video.srcObject = stream; })
+.catch(err => { alert("Error accessing webcam: " + err); });
+
+captureBtn.addEventListener('click', () => {
+    // Draw current video frame to canvas
+    const context = canvas.getContext('2d');
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Convert canvas to base64
+    faceInput.value = canvas.toDataURL('image/jpeg');
+
+    // Submit the form
+    captureBtn.closest('form').submit();
+});
+</script>
+{% endblock %}
+

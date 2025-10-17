@@ -1,0 +1,49 @@
+{% extends "header.html" %}
+
+{% block title %}Face Scan Entry{% endblock %}
+
+{% block content %}
+<div class="container mt-5 text-center">
+  <div class="card mx-auto shadow-sm p-4" style="max-width: 600px;">
+    <div class="card-body">
+      <h5 class="card-title fw-bold mb-3">🟢 Face Recognition Entry</h5>
+      <p class="text-muted mb-4">
+        Look at the camera. Your face will be scanned automatically for entry.
+      </p>
+
+      <video id="webcam" width="480" height="360" autoplay muted playsinline class="mb-3"></video>
+      <p id="status" class="text-primary fw-bold">Initializing camera...</p>
+
+      <form id="faceForm" method="POST" action="{{ url_for('face.face_entry') }}">
+        <input type="hidden" name="face_image" id="face_image">
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  const video = document.getElementById("webcam");
+  const statusText = document.getElementById("status");
+
+  // Access webcam
+  navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+      video.srcObject = stream;
+      statusText.innerText = "Camera ready. Align your face.";
+    })
+    .catch(err => {
+      statusText.innerText = "❌ Cannot access camera: " + err;
+    });
+
+  // Capture image every 2 seconds and submit form
+  setInterval(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext("2d").drawImage(video, 0, 0);
+    const dataUrl = canvas.toDataURL("image/jpeg");
+    document.getElementById("face_image").value = dataUrl;
+    document.getElementById("faceForm").submit();
+  }, 5000); // change interval as needed
+</script>
+{% endblock %}

@@ -1,0 +1,209 @@
+{% extends "header.html" %}
+
+{% block title %}Dashboard - Crowd Management System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <!-- Summary Cards -->
+  <div class="row text-center mb-4">
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Current Count</h5>
+          <h2 class="text-primary fw-bold">{{ dash_data.active_count }}</h2>
+          <span class="text-success">🟢 Active now</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Today's Entries</h5>
+          <h2 class="text-success fw-bold">{{ dash_data.total_count }}</h2>
+          <span class="{% if dash_data.today_entry_increase > 0 %} text-success {% else %} text-danger {% endif %}">
+            {{ dash_data.today_entry_increase }}% from yesterday
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Today's Exits</h5>
+          <h2 class="text-danger fw-bold">{{ dash_data.exit_count }}</h2>
+          <span class="text-muted">Normal flow</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Peak Count</h5>
+          <h2 class="text-warning fw-bold">{{ dash_data.peak_count }}</h2>
+          <span class="text-muted">Today at {{ dash_data.peak_hour }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Activity & Today's Flow Side by Side -->
+  <div class="row">
+    <!-- Recent Activity (narrower) -->
+    <div class="col-md-4 d-flex">
+      <div class="card shadow-sm mb-4 flex-fill" style="height: 400px;">
+        <div class="card-header fw-semibold">📈 Recent Activity</div>
+        <div class="list-group list-group-flush overflow-auto" style="height: calc(100% - 56px); scrollbar-width: none;">
+          {% for log in dash_data.recent_logs %}
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <span class="me-2">
+                   {% if log.status == 'Enterd' %}
+                     <img src="https://img.icons8.com/?size=100&id=60989&format=png&color=40C057" alt="Entry" width="20" height="20">
+                   {% else %}
+                     <img src="https://img.icons8.com/?size=100&id=59781&format=png&color=FF3B30" alt="Exit" width="20" height="20">
+                   {% endif %}
+              </span>
+              <strong>{{ log.name }}</strong><br>
+              <small>{{ log.aadhar_number }} • {{ log.entry_place }}</small>
+            </div>
+            <div class="text-end text-muted small">
+              {{ log.entry_time }}<br>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Today's Flow (wider chart) -->
+    <div class="col-md-8 d-flex">
+      <div class="card shadow-sm mb-4 flex-fill" style="height: 400px;">
+        <div class="card-header fw-semibold">📊 Today's Flow</div>
+        <div class="card-body" style="height: calc(100% - 56px);">
+          <canvas id="flowChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const flowData = {{ dash_data.flow_data | tojson }};
+    if (!flowData || flowData.length === 0) return;
+
+    const labels = flowData.map(item => item[0]);
+    const entries = flowData.map(item => item[1]);
+    const exits = flowData.map(item => item[2]);
+
+    const ctx = document.getElementById("flowChart").getContext("2d");
+
+    // Smooth gradients
+    const gradientEntries = ctx.createLinearGradient(0, 0, 0, 500);
+    gradientEntries.addColorStop(0, "rgba(0, 255, 136, 0.4)");
+    gradientEntries.addColorStop(1, "rgba(0, 255, 136, 0.05)");
+
+    const gradientExits = ctx.createLinearGradient(0, 0, 0, 500);
+    gradientExits.addColorStop(0, "rgba(255, 0, 68, 0.4)");
+    gradientExits.addColorStop(1, "rgba(255, 0, 68, 0.05)");
+
+    new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: "Entries",
+            data: entries,
+            borderColor: "#00ff88",
+            backgroundColor: gradientEntries,
+            borderWidth: 2.5,
+            pointBackgroundColor: "#00ff88",
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            tension: 0.35,
+            fill: true,
+          },
+          {
+            label: "Exits",
+            data: exits,
+            borderColor: "#ff3366",
+            backgroundColor: gradientExits,
+            borderWidth: 2.5,
+            pointBackgroundColor: "#ff3366",
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            tension: 0.35,
+            fill: true,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: "index",
+          intersect: false,
+        },
+        plugins: {
+          legend: {
+            labels: {
+              color: "#333",
+              font: { size: 13, family: "Poppins, sans-serif" },
+            },
+          },
+          tooltip: {
+            backgroundColor: "rgba(0,0,0,0.8)",
+            titleFont: { size: 13, weight: "bold" },
+            bodyFont: { size: 12 },
+            cornerRadius: 8,
+            padding: 10,
+            callbacks: {
+              title: (context) => {
+                const label = context[0].label;
+                const date = new Date(label);
+                if (isNaN(date)) return label;
+                let hours = date.getHours();
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12 || 12;
+                return `${hours} ${ampm}`;
+              },
+            },
+          },
+        },
+        scales: {
+          x: {
+            ticks: {
+              color: "#555",
+              font: { size: 12 },
+              callback: function (value, index, values) {
+                const label = this.getLabelForValue(value);
+                const date = new Date(label);
+                if (isNaN(date)) return label;
+                let hours = date.getHours();
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12 || 12;
+                return `${hours} ${ampm}`;
+              },
+            },
+            grid: { color: "rgba(0,0,0,0.05)" },
+          },
+          y: {
+            ticks: {
+              color: "#555",
+              font: { size: 12 },
+              stepSize: 5,
+            },
+            grid: { color: "rgba(0,0,0,0.05)" },
+            beginAtZero: true,
+          },
+        },
+      },
+    });
+  });
+</script>
+
+{% endblock %}

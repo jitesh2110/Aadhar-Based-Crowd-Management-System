@@ -1,0 +1,83 @@
+{% extends "header.html" %}
+
+{% block title %}Profile - {{ person.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <!-- Personal Info Card -->
+    <div class="col-md-4">
+      <div class="card shadow-sm mb-4 border-0">
+        <div class="card-header bg-light fw-bold">👤 Personal Details</div>
+        <div class="card-body">
+          <div class="mb-3 d-flex align-items-center">
+            <i class="bi bi-person-circle fs-2 text-secondary me-2"></i>
+            <h5 class="fw-semibold mb-0">{{ person.name }}</h5>
+          </div>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item"><strong>Aadhaar:</strong> {{ person.aadhar_number }}</li>
+            <li class="list-group-item"><strong>DOB:</strong> {{ person.dob.strftime('%d-%m-%Y') }}</li>
+            <li class="list-group-item"><strong>Gender:</strong> {{ person.gender }}</li>
+            <li class="list-group-item"><strong>Phone:</strong> {{ person.phone_number }}</li>
+            <li class="list-group-item"><strong>Address:</strong> {{ person.address }}</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Entry/Exit Logs -->
+    <div class="col-md-8">
+      <div class="card shadow-sm mb-4 border-0">
+        <div class="card-header bg-light fw-bold">📜 Entry & Exit History</div>
+        <div class="card-body p-0">
+          {% if logs %}
+          <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+            <table class="table table-striped mb-0">
+              <thead class="table-light sticky-top">
+                <tr>
+                  <th>Date & Time</th>
+                  <th>Place</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for log in logs %}
+                <tr>
+                  <td>{{ log.entry_time.strftime('%d-%m-%Y %H:%M') }}</td>
+                  <td>{{ log.entry_place }}</td>
+                  <td>
+                    <span class="badge {% if log.status == 'Enterd' %}bg-success{% else %}bg-danger{% endif %}">
+                      {{ log.status }}
+                    </span>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <p class="text-muted p-3">No logs found.</p>
+          {% endif %}
+        </div>
+      </div>
+
+     <div class="text-end mt-3">
+  <!-- Fingerprint Registration -->
+  <a href="{{ url_for('fingerprint.register_fingerprint', aadhar_number=person.aadhar_number) }}"
+     class="btn btn-outline-primary rounded-3 mb-2 px-3 py-2">
+    <i class="bi bi-fingerprint me-2"></i> Register Fingerprint
+  </a>
+
+  <!-- Face Registration via Webcam -->
+  <a href="{{ url_for('face.register_face_webcam', aadhar_number=person.aadhar_number) }}"
+     class="btn btn-outline-warning rounded-3 mb-2 px-3 py-2">
+    <i class="bi bi-camera me-2"></i> Register Face via Webcam
+  </a>
+
+  <!-- Back to Search -->
+  <a href="{{ url_for('search.search') }}"
+     class="btn btn-outline-secondary rounded-3 mb-2 px-3 py-2">
+    🔙 Return to Search
+  </a>
+</div>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends 'header.html' %}
+
+{% block title %}Analytics - Crowd Management System{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+  <!-- 📊 Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="fw-bold"><i class="bi bi-graph-up-arrow text-primary me-2"></i>Analytics Dashboard</h4>
+      <p class="text-muted mb-0">Comprehensive crowd flow analysis and insights</p>
+    </div>
+  </div>
+
+  <!-- 🧮 Stats Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <div class="bg-light rounded-circle p-2 me-2">
+              <i class="bi bi-person-fill-down fs-4 text-success"></i>
+            </div>
+            <h6 class="text-muted mb-0">Total Entries</h6>
+          </div>
+          <h4 class="fw-bold">{{ total_entries }}</h4>
+          <small class="text-success">Live count</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <div class="bg-light rounded-circle p-2 me-2">
+              <i class="bi bi-person-fill-up fs-4 text-danger"></i>
+            </div>
+            <h6 class="text-muted mb-0">Total Exits</h6>
+          </div>
+          <h4 class="fw-bold">{{ total_exits }}</h4>
+          <small class="text-muted">Net difference: +{{ total_entries - total_exits }}</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <div class="bg-light rounded-circle p-2 me-2">
+              <i class="bi bi-calendar-check fs-4 text-primary"></i>
+            </div>
+            <h6 class="text-muted mb-0">Daily Average</h6>
+          </div>
+          <h4 class="fw-bold">{{ daily_avg }}</h4>
+          <small class="text-muted">Entries per day</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Entry / Exit Ratio Card -->
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <div class="bg-light rounded-circle p-2 me-2">
+              <i class="bi bi-arrow-left-right fs-4 text-warning"></i>
+            </div>
+            <h6 class="text-muted mb-0">Entry / Exit Ratio</h6>
+          </div>
+          <h4 class="fw-bold">{{ entry_exit_ratio }}</h4>
+          <small class="text-muted">Today</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 📈 Trend & Peak Hours -->
+  <div class="row g-4">
+    <!-- Weekly Trend -->
+    <div class="col-md-6">
+      <div class="card shadow-sm border-0 p-3" style="height: 350px;">
+        <h6 class="fw-semibold mb-3">Weekly Trend</h6>
+        {% if weekly_data %}
+          {% for day, count in weekly_data %}
+          <div class="mb-2">
+            <div class="d-flex justify-content-between">
+              <span>{{ day }}</span>
+              <span class="fw-semibold">{{ count }}</span>
+            </div>
+            <div class="progress" style="height: 8px;">
+              <div class="progress-bar bg-success" style="width: {{ count * 100 // 200 }}%;"></div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted">No data available.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Peak Hours -->
+    <div class="col-md-6">
+      <div class="card shadow-sm border-0 p-3" style="height: 350px;">
+        <h6 class="fw-semibold mb-3">Peak Hours Analysis</h6>
+        <p class="text-muted">Top 5 busiest hours today:</p>
+        {% if peak_hours %}
+        <ul class="list-group overflow-auto" style="max-height: 330px; scrollbar-width: none;">
+          {% for time_range, count in peak_hours %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div><i class="bi bi-clock me-2 text-primary"></i>{{ time_range }}</div>
+            <span class="badge bg-primary rounded-pill">{{ count }} visitors</span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+          <p class="text-muted">No data available.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 🔹 Next Button -->
+<div class="d-flex justify-content-end mt-4">
+  <a href="{{ url_for('analysis2.analysis2') }}" class="btn btn-primary">
+    Next ➡ Demographics Analysis
+  </a>
+</div>
+
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends 'header.html' %}
+
+{% block title %}Entry Point - Crowd Management System{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="card mx-auto shadow-sm p-4" style="max-width: 500px;">
+    <div class="card-body">
+
+      <!-- 🔷 Header with Icon -->
+      <div class="d-flex align-items-center mb-3">
+        <div class="bg-light rounded-circle p-2 me-2">
+          <i class="bi bi-person-fill-down fs-4 text-success"></i>
+        </div>
+        <h5 class="card-title text-primary fw-bold mb-0">Entry Point</h5>
+      </div>
+
+      <!-- 🔹 Subtitle -->
+      <p class="text-muted mb-4">Enter Aadhaar number to process entry</p>
+
+      <!-- 🔸 Form -->
+      <form method="POST" action="{{ url_for('entry.entry') }}">
+        <div class="input-group">
+          <input type="text" name="aadhar_number" class="form-control" placeholder="XXXX-XXXX-XXXX" required>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-arrow-right-circle-fill"></i> Enter
+          </button>
+        </div>
+      </form>
+      <form method="POST" action="{{ url_for('fingerprint.scan_entry') }}" enctype="multipart/form-data">
+  <div class="mb-3">
+    <label class="form-label">Upload Fingerprint</label>
+    <input type="file" name="fingerprint_image" class="form-control" accept="image/*" required>
+  </div>
+  <button type="submit" class="btn btn-success">
+    <i class="bi bi-fingerprint"></i> Scan & Enter
+  </button>
+</form>
+
+      <form method="GET" action="{{ url_for('face.face_entry') }}" class="mt-2">
+    <button type="submit" class="btn btn-warning w-100">
+        <i class="bi bi-camera"></i> Scan Face & Enter
+    </button>
+</form>
+
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
