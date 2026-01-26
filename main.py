@@ -29,7 +29,7 @@ server_started = True
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'sectrekey2346387'
 
-# use this database uri for sqqlite
+# use this database uri for sqlite
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///crowdmanagement.db?check_same_thread=False'
 
 # and this one is for postgres
