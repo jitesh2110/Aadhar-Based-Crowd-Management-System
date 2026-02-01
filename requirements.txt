@@ -1,6 +1,8 @@
 flask==3.0.2
+numpy==1.26.4
+pandas==2.2.1
 Flask-Bootstrap==3.3.7.1
 Flask-SQLAlchemy==3.0.5
 SQLAlchemy==2.0.22
 Flask-Migrate==4.0.4
-pandas==2.1.1
+
