@@ -5,10 +5,20 @@ from datetime import date
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
+# Gates coordinates
+GATES = {
+    "Ramkund": [20.00828, 73.79191],
+    "Sita Gufa": [20.00726, 73.79604],
+    "Panchavati": [20.00711, 73.79251],
+    "Kapaleshwar": [19.93243, 73.53053],
+    "Godavari Ghat": [20.00028, 73.81462]
+}
+
 @dashboard_bp.route("/dashboard", methods=['GET'], endpoint="dashboard")
 def dashboard():
     logs = entrylogs.query.all()
     data = []
+
     for log in logs:
         if log.card:
             data.append({
@@ -30,10 +40,10 @@ def dashboard():
             'peak_count': 0,
             'peak_hour': 'N/A',
             'recent_logs': [],
-            'flow_data': []
+            'flow_data': [],
+            'gate_counts': {gate: 0 for gate in GATES}
         }
-        return render_template("dashboard.html", dash_data=dash_data)
-
+        return render_template("dashbord.html", dash_data=dash_data, gates=GATES)
 
     df['entry_time'] = pd.to_datetime(df['entry_time'])
 
@@ -48,7 +58,6 @@ def dashboard():
     # Yesterday entries
     yesterday_entries = df[(df['status'] == 'Enterd') & (df['entry_time'].dt.date == (date.today() - pd.Timedelta(days=1)))]
     yesterday_entry_count = yesterday_entries['aadhar_number'].nunique()
-
     today_percent_increase = ((today_entry_count / yesterday_entry_count) * 100) if yesterday_entry_count else 0
 
     # Exits
@@ -70,16 +79,23 @@ def dashboard():
     today_df = df[df['entry_time'].dt.date == date.today()]
     hourly = today_df.groupby(['hour', 'status']).size().reset_index(name='count')
     pivoted_hourly = hourly.pivot_table(index='hour', columns='status', values='count', fill_value=0).reset_index()
-    if 'Enterd' not in pivoted_hourly.columns:
-        pivoted_hourly['Enterd'] = 0
-    if 'Exited' not in pivoted_hourly.columns:
-        pivoted_hourly['Exited'] = 0
+    if 'Enterd' not in pivoted_hourly.columns: pivoted_hourly['Enterd'] = 0
+    if 'Exited' not in pivoted_hourly.columns: pivoted_hourly['Exited'] = 0
     flow_data = list(pivoted_hourly[['hour', 'Enterd', 'Exited']].itertuples(index=False, name=None))
 
     # Recent logs
     recent_logs = df.sort_values(by='entry_time', ascending=False).head(5)
     recent_logs['entry_time'] = recent_logs['entry_time'].dt.strftime('%Y-%m-%d %H:%M:%S')
     recent_logs = recent_logs.to_dict(orient='records')
+
+    # Gate counts for heatmap
+    gate_counts = {
+        "Ramkund": today_entries[today_entries['entry_place'] == "Ramkund"]['aadhar_number'].nunique(),
+        "Sita Gufa": today_entries[today_entries['entry_place'] == "Sita Gufa"]['aadhar_number'].nunique(),
+        "Panchavati": today_entries[today_entries['entry_place'] == "Panchavati"]['aadhar_number'].nunique(),
+        "Kapaleshwar": today_entries[today_entries['entry_place'] == "Kapaleshwar"]['aadhar_number'].nunique(),
+        "Godavari Ghat": today_entries[today_entries['entry_place'] == "Godavari Ghat"]['aadhar_number'].nunique()
+    }
 
     dash_data = {
         'total_count': today_entry_count,
@@ -89,7 +105,8 @@ def dashboard():
         'peak_count': peak_count,
         'peak_hour': peak_hour,
         'recent_logs': recent_logs,
-        'flow_data': flow_data
+        'flow_data': flow_data,
+        'gate_counts': gate_counts
     }
 
-    return render_template("dashbord.html", dash_data=dash_data)
+    return render_template("dashbord.html", dash_data=dash_data, gates=GATES)

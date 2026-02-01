@@ -85,23 +85,33 @@
       </div>
     </div>
   </div>
+
+  <!-- Heatmap card -->
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header fw-semibold">🔥 Entry Heatmap</div>
+        <div class="card-body p-0" style="height: 400px;">
+          <div id="heatmap" style="height: 100%; width: 100%;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Chart.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const flowData = {{ dash_data.flow_data | tojson }};
-    if (!flowData || flowData.length === 0) return;
-
+document.addEventListener("DOMContentLoaded", function () {
+  // ----- Today's Flow Chart -----
+  const flowData = {{ dash_data.flow_data | tojson }};
+  if (flowData && flowData.length > 0) {
     const labels = flowData.map(item => item[0]);
     const entries = flowData.map(item => item[1]);
     const exits = flowData.map(item => item[2]);
-
     const ctx = document.getElementById("flowChart").getContext("2d");
 
-    // Smooth gradients
     const gradientEntries = ctx.createLinearGradient(0, 0, 0, 500);
     gradientEntries.addColorStop(0, "rgba(0, 255, 136, 0.4)");
     gradientEntries.addColorStop(1, "rgba(0, 255, 136, 0.05)");
@@ -144,17 +154,9 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        interaction: {
-          mode: "index",
-          intersect: false,
-        },
+        interaction: { mode: "index", intersect: false },
         plugins: {
-          legend: {
-            labels: {
-              color: "#333",
-              font: { size: 13, family: "Poppins, sans-serif" },
-            },
-          },
+          legend: { labels: { color: "#333", font: { size: 13, family: "Poppins, sans-serif" } } },
           tooltip: {
             backgroundColor: "rgba(0,0,0,0.8)",
             titleFont: { size: 13, weight: "bold" },
@@ -179,7 +181,7 @@
             ticks: {
               color: "#555",
               font: { size: 12 },
-              callback: function (value, index, values) {
+              callback: function (value) {
                 const label = this.getLabelForValue(value);
                 const date = new Date(label);
                 if (isNaN(date)) return label;
@@ -191,19 +193,53 @@
             },
             grid: { color: "rgba(0,0,0,0.05)" },
           },
-          y: {
-            ticks: {
-              color: "#555",
-              font: { size: 12 },
-              stepSize: 5,
-            },
-            grid: { color: "rgba(0,0,0,0.05)" },
-            beginAtZero: true,
-          },
+          y: { ticks: { color: "#555", font: { size: 12 }, stepSize: 5 }, grid: { color: "rgba(0,0,0,0.05)" }, beginAtZero: true },
         },
       },
     });
-  });
+  }
+
+  // ----- Leaflet Heatmap -----
+  const gates = {{ gates | tojson }};
+  const gateCounts = {{ dash_data.gate_counts | tojson }};
+  const maxCount = Math.max(...Object.values(gateCounts));
+
+  const heatData = [];
+  for (const gate in gates) {
+    const intensity = maxCount ? gateCounts[gate] / maxCount : 0;
+    heatData.push([gates[gate][0], gates[gate][1], intensity]);
+  }
+
+  const map = L.map('heatmap').setView([20.006, 73.792], 14);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a>',
+  }).addTo(map);
+
+  L.heatLayer(heatData, { radius: 25, blur: 15, maxZoom: 17 }).addTo(map);
+
+  // ----- Legend -----
+  const legend = L.control({ position: "bottomright" });
+  legend.onAdd = function (map) {
+    const div = L.DomUtil.create("div", "info legend");
+    const grades = [0, 0.25, 0.5, 0.75, 1];
+    const labels = grades.map(g => {
+      const color = `rgba(255,0,0,${g})`;
+      return `<i style="background:${color};width:20px;height:10px;display:inline-block;margin-right:5px;"></i> ${Math.round(g * maxCount)}`;
+    });
+    div.innerHTML = "<strong>Entries</strong><br>" + labels.join("<br>");
+    div.style.padding = "6px";
+    div.style.background = "rgba(255,255,255,0.8)";
+    div.style.borderRadius = "5px";
+    return div;
+  };
+  legend.addTo(map);
+});
 </script>
+
+<!-- Leaflet CSS & JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
 
 {% endblock %}

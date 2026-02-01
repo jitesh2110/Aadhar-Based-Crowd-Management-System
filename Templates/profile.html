@@ -5,9 +5,9 @@
 {% block content %}
 <div class="container mt-4">
   <div class="row">
-    <!-- Personal Info Card -->
+    <!-- LEFT: Personal Info + Buttons -->
     <div class="col-md-4">
-      <div class="card shadow-sm mb-4 border-0">
+      <div class="card shadow-sm mb-3 border-0">
         <div class="card-header bg-light fw-bold">👤 Personal Details</div>
         <div class="card-body">
           <div class="mb-3 d-flex align-items-center">
@@ -23,9 +23,29 @@
           </ul>
         </div>
       </div>
+
+      <!-- ACTION BUTTONS -->
+      <div class="mt-2">
+        <div class="d-flex gap-2 mb-2">
+          <a href="{{ url_for('fingerprint.register_fingerprint', aadhar_number=person.aadhar_number) }}"
+             class="btn btn-outline-primary rounded-3 px-3 py-2">
+            <i class="bi bi-fingerprint me-2"></i> Register Fingerprint
+          </a>
+
+          <a href="{{ url_for('face.register_face_webcam', aadhar_number=person.aadhar_number) }}"
+             class="btn btn-outline-warning rounded-3 px-3 py-2">
+            <i class="bi bi-camera me-2"></i> Register Face via Webcam
+          </a>
+        </div>
+
+        <a href="{{ url_for('search.search') }}"
+           class="btn btn-outline-secondary rounded-3 px-3 py-2">
+          🔙 Return to Search
+        </a>
+      </div>
     </div>
 
-    <!-- Entry/Exit Logs -->
+    <!-- RIGHT: Logs + Map -->
     <div class="col-md-8">
       <div class="card shadow-sm mb-4 border-0">
         <div class="card-header bg-light fw-bold">📜 Entry & Exit History</div>
@@ -61,23 +81,100 @@
         </div>
       </div>
 
-     <div class="text-end mt-3">
-  <!-- Fingerprint Registration -->
-  <a href="{{ url_for('fingerprint.register_fingerprint', aadhar_number=person.aadhar_number) }}"
-     class="btn btn-outline-primary rounded-3 mb-2 px-3 py-2">
-    <i class="bi bi-fingerprint me-2"></i> Register Fingerprint
-  </a>
-
-  <!-- Face Registration via Webcam -->
-  <a href="{{ url_for('face.register_face_webcam', aadhar_number=person.aadhar_number) }}"
-     class="btn btn-outline-warning rounded-3 mb-2 px-3 py-2">
-    <i class="bi bi-camera me-2"></i> Register Face via Webcam
-  </a>
-
-  <!-- Back to Search -->
-  <a href="{{ url_for('search.search') }}"
-     class="btn btn-outline-secondary rounded-3 mb-2 px-3 py-2">
-    🔙 Return to Search
-  </a>
+      <!-- MAP -->
+      <div id="map" style="height: 400px; width: 100%;"></div>
+    </div>
+  </div>
 </div>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<!-- ✅ Added numbered marker style -->
+<style>
+.numbered-marker {
+  background: #2563eb;
+  color: white;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  text-align: center;
+  line-height: 32px;
+  font-weight: bold;
+  border: 2px solid white;
+  box-shadow: 0 0 6px rgba(0,0,0,0.3);
+}
+</style>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+  const map = L.map('map').setView([19.9979, 73.7898], 15);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  const visitedPoints = {{ visited_points | tojson | safe }};
+
+  // ✅ Added numbered icon generator
+  function numberedIcon(number) {
+    return L.divIcon({
+      className: "",
+      html: `<div class="numbered-marker">${number}</div>`,
+      iconSize: [32, 32]
+    });
+  }
+
+  if (visitedPoints.length > 0) {
+
+    const uniquePlaces = [];
+    const seen = new Set();
+
+    visitedPoints.forEach(p => {
+      if (!seen.has(p.name)) {
+        seen.add(p.name);
+
+        let lat = p.lat;
+        let lng = p.lng;
+
+        if (p.name === "Ramkund") {
+          lat += 0.00025;
+          lng += 0.00025;
+        }
+
+        uniquePlaces.push({
+          ...p,
+          lat,
+          lng
+        });
+      }
+    });
+
+    const route = [];
+    const bounds = [];
+
+    // ✅ Only this loop changed to support numbering
+    uniquePlaces.forEach((p, index) => {
+      route.push([p.lat, p.lng]);
+      bounds.push([p.lat, p.lng]);
+
+      L.marker([p.lat, p.lng], {
+        icon: numberedIcon(index + 1)
+      })
+      .addTo(map)
+      .bindPopup(
+        `<b>Visit #${index + 1}</b><br>${p.name}<br>${p.time}`
+      );
+    });
+
+    L.polyline(route, {
+      color: 'blue',
+      weight: 4
+    }).addTo(map);
+
+    map.fitBounds(bounds, { padding: [40, 40] });
+  }
+</script>
+
 {% endblock %}
